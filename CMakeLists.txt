@@ -3,6 +3,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 project(basler_odometry)
 
+set(BASLER_PUBLISHER "basler_publisher")
+
 find_package(Pylon QUIET)
 if (NOT ${Pylon_FOUND})
     include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindPylon.cmake")
@@ -13,28 +15,27 @@ if (NOT Pylon_FOUND)
 endif ()
 
 find_package(
-        catkin REQUIRED COMPONENTS
-        cv_bridge
-        roscpp
-        sensor_msgs
-        std_msgs
-        message_generation
+    catkin REQUIRED COMPONENTS
+    cv_bridge
+    roscpp
+    sensor_msgs
+    std_msgs
+    message_generation
 )
 
 add_message_files(
-        DIRECTORY msg
-        FILES
-        Basler.msg
+    FILES
+    Basler.msg
 )
 
 generate_messages(
-        DEPENDENCIES
-        std_msgs
-        sensor_msgs
+    DEPENDENCIES
+    std_msgs
+    sensor_msgs
 )
 
 catkin_package(
-        DEPENDS message_runtime
+    DEPENDS message_runtime
 )
 
 include_directories(
@@ -43,14 +44,23 @@ include_directories(
         ${Pylon_INCLUDE_DIRS}
 )
 
-add_executable(basler_odometry
+add_executable(
+    ${BASLER_PUBLISHER}
         src/pylon_wrapper.cpp
         src/basler_publisher.cpp
-        )
+)
 
 target_link_libraries(
-        basler_odometry
+    ${BASLER_PUBLISHER}
         ${catkin_LIBRARIES}
         ${Pylon_LIBRARIES})
 
-#add_dependencies(basler_odometry basler_publisher_generate_messages_cpp)
+add_dependencies(${BASLER_PUBLISHER} basler_odometry_generate_messages_cpp)
+
+install(
+    TARGETS ${BASLER_PUBLISHER}
+
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

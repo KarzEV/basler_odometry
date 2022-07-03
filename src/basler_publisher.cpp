@@ -1,4 +1,5 @@
 #include <string>
+#include <iostream>
 
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
@@ -14,14 +15,9 @@ int main(int argc, char **argv) {
     Pylon::PylonInitialize();
 
     ros::NodeHandle nd;
-    ros::CallbackQueue async_queue;
-    nd.setCallbackQueue(&async_queue);
 
     pylon_odometry::WrapperStereoPair wrapper_stereo_pair(nd,
                                                           "../../src/basler_odometry/config/config_addres.json");
     wrapper_stereo_pair.config_and_start();
-
-    ros::AsyncSpinner spinner(1, &async_queue);
-    spinner.start();
 }
 

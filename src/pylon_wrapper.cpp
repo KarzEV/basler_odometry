@@ -6,6 +6,7 @@
 #include <chrono>
 #include <thread>
 #include <vector>
+#include <iostream>
 
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/core.hpp>
@@ -34,15 +35,15 @@ void CImageEventPrinter::OnImageGrabbed(CInstantCamera &camera, const CGrabResul
     formatConverter.Convert(pylonImage, ptrGrabResult);
 
     CvImage cvImage(std_msgs::Header(),
-                    sensor_msgs::image_encodings::TYPE_8UC3,
+                    sensor_msgs::image_encodings::RGB8,
                     Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3,
                         (uint8_t *) pylonImage.GetBuffer()));
 
-
-    basler_odometry::Basler new_data;
-    new_data.header.stamp = ros::Time::now();
-    cvImage.toImageMsg(new_data.image_basler);
-
+//    basler_odometry::Basler new_data;
+//    new_data.header.stamp = ros::Time::now();
+//    cvImage.toImageMsg(new_data.image_basler);
+    sensor_msgs::Image new_data;
+    cvImage.toImageMsg(new_data);
     camera_publisher_.publish(new_data);
 }
 
@@ -52,9 +53,10 @@ void WrapperStereoPair::config_and_start() {
 }
 
 void WrapperStereoPair::config_stereo_pair() {
-    std::vector<std::string> name_topics(2);
-    name_topics.push_back("/basler_odometry/left");
-    name_topics.push_back("/basler_odometry/right");
+    using namespace std::string_literals;
+    std::vector<std::string> name_topics;
+    name_topics.push_back("/basler_odometry/left"s);
+    name_topics.push_back("/basler_odometry/right"s);
 
     IGigETransportLayer *pTL = dynamic_cast<IGigETransportLayer *>(ctlFactory_.CreateTl(BaslerGigEDeviceClass));
     if (pTL == NULL) {
@@ -64,6 +66,8 @@ void WrapperStereoPair::config_stereo_pair() {
     DeviceInfoList_t allDeviceInfos;
     while (pTL->EnumerateDevices(allDeviceInfos) < c_maxCamerasToUse) {
         std::this_thread::sleep_for(std::chrono::milliseconds(t_durationMilliseconds));
+        std::cout << "sleep" << std::endl;
+        std::cout << pTL->EnumerateDevices(allDeviceInfos) << std::endl;
     }
 
     DeviceInfoList_t usableDeviceInfos;
@@ -79,11 +83,15 @@ void WrapperStereoPair::config_stereo_pair() {
 
     for (size_t i = 0; i < camera_array_->GetSize(); ++i) {
         (*camera_array_)[i].Attach(ctlFactory_.CreateDevice(usableDeviceInfos[i]));
-        (*camera_array_)[i].RegisterConfiguration(
-                new CActionTriggerConfiguration(device_key_, group_key_, AllGroupMask),
-                RegistrationMode_Append, Cleanup_Delete);
+        (*camera_array_)[i].RegisterConfiguration( new CSoftwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete );
+//        (*camera_array_)[i].RegisterConfiguration(
+//                new CActionTriggerConfiguration(device_key_, group_key_, AllGroupMask),
+//                RegistrationMode_Append, Cleanup_Delete);
+//        (*camera_array_)[i].RegisterImageEventHandler(
+//                new CImageEventPrinter(stereo_handle_.advertise<basler_odometry::Basler>(name_topics[i], 1)),
+//                RegistrationMode_Append, Cleanup_Delete);
         (*camera_array_)[i].RegisterImageEventHandler(
-                new CImageEventPrinter(stereo_handle_.advertise<basler_odometry::Basler>(name_topics[i], 1)),
+                new CImageEventPrinter(stereo_handle_.advertise<sensor_msgs::Image>(name_topics[i], 2)),
                 RegistrationMode_Append, Cleanup_Delete);
 
         (*camera_array_)[i].GrabCameraEvents = true;
@@ -92,17 +100,20 @@ void WrapperStereoPair::config_stereo_pair() {
 
 void WrapperStereoPair::start_stereo_pair() {
     camera_array_->Open();
-
     camera_array_->StartGrabbing(GrabStrategy_OneByOne, GrabLoop_ProvidedByInstantCamera);
-
-    IGigETransportLayer *pTL = dynamic_cast<IGigETransportLayer *>(ctlFactory_.CreateTl(BaslerGigEDeviceClass));
-    if (pTL == NULL) {
-        throw std::runtime_error("No GigE transport layer available.");
-    }
-
+    std::cout << "start" << std::endl;
+//    IGigETransportLayer *pTL = dynamic_cast<IGigETransportLayer *>(ctlFactory_.CreateTl(BaslerGigEDeviceClass));
+//    if (pTL == NULL) {
+//        throw std::runtime_error("No GigE transport layer available.");
+//    }
+    ros::Rate rate(10);
     while (camera_array_->IsGrabbing()) {
-        if ((*camera_array_)[0].WaitForFrameTriggerReady(100)) {
-            pTL->IssueActionCommand(device_key_, group_key_, AllGroupMask, subnet_);
+        if ((*camera_array_)[1].WaitForFrameTriggerReady(100,  TimeoutHandling_ThrowException)) {
+//            pTL->IssueActionCommand(device_key_, group_key_, AllGroupMask, subnet_);
+            (*camera_array_)[1].ExecuteSoftwareTrigger();
+            (*camera_array_)[0].ExecuteSoftwareTrigger();
+            ros::spinOnce();
+            rate.sleep();
         }
     }
 
