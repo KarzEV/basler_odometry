@@ -39,9 +39,6 @@ void CImageEventPrinter::OnImageGrabbed(CInstantCamera &camera, const CGrabResul
                     Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3,
                         (uint8_t *) pylonImage.GetBuffer()));
 
-//    basler_odometry::Basler new_data;
-//    new_data.header.stamp = ros::Time::now();
-//    cvImage.toImageMsg(new_data.image_basler);
     sensor_msgs::Image new_data;
     cvImage.toImageMsg(new_data);
     camera_publisher_.publish(new_data);
@@ -84,12 +81,6 @@ void WrapperStereoPair::config_stereo_pair() {
     for (size_t i = 0; i < camera_array_->GetSize(); ++i) {
         (*camera_array_)[i].Attach(ctlFactory_.CreateDevice(usableDeviceInfos[i]));
         (*camera_array_)[i].RegisterConfiguration( new CSoftwareTriggerConfiguration, RegistrationMode_ReplaceAll, Cleanup_Delete );
-//        (*camera_array_)[i].RegisterConfiguration(
-//                new CActionTriggerConfiguration(device_key_, group_key_, AllGroupMask),
-//                RegistrationMode_Append, Cleanup_Delete);
-//        (*camera_array_)[i].RegisterImageEventHandler(
-//                new CImageEventPrinter(stereo_handle_.advertise<basler_odometry::Basler>(name_topics[i], 1)),
-//                RegistrationMode_Append, Cleanup_Delete);
         (*camera_array_)[i].RegisterImageEventHandler(
                 new CImageEventPrinter(stereo_handle_.advertise<sensor_msgs::Image>(name_topics[i], 2)),
                 RegistrationMode_Append, Cleanup_Delete);
@@ -102,14 +93,9 @@ void WrapperStereoPair::start_stereo_pair() {
     camera_array_->Open();
     camera_array_->StartGrabbing(GrabStrategy_OneByOne, GrabLoop_ProvidedByInstantCamera);
     std::cout << "start" << std::endl;
-//    IGigETransportLayer *pTL = dynamic_cast<IGigETransportLayer *>(ctlFactory_.CreateTl(BaslerGigEDeviceClass));
-//    if (pTL == NULL) {
-//        throw std::runtime_error("No GigE transport layer available.");
-//    }
     ros::Rate rate(10);
     while (camera_array_->IsGrabbing()) {
-        if ((*camera_array_)[1].WaitForFrameTriggerReady(100,  TimeoutHandling_ThrowException)) {
-//            pTL->IssueActionCommand(device_key_, group_key_, AllGroupMask, subnet_);
+        if ((*camera_array_)[0].WaitForFrameTriggerReady(100) && (*camera_array_)[1].WaitForFrameTriggerReady(100)) {
             (*camera_array_)[1].ExecuteSoftwareTrigger();
             (*camera_array_)[0].ExecuteSoftwareTrigger();
             ros::spinOnce();
