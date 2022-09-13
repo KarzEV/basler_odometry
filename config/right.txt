@@ -1,0 +1,14 @@
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_2.bmp
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_3.bmp
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_4.bmp
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_5.bmp
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_6.bmp
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_7.bmp
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_8.bmp
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_9.bmp
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_10.bmp
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_11.bmp
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_12.bmp
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_13.bmp
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_14.bmp
+/home/evkartsev/bmstu/bmstu_workspace/src/basler_odometry/config/calibrate_images/right_15.bmp
